@@ -29,3 +29,22 @@ to just the Sony protocol.
 * The Motor-pot code is re-arranged but the algorithm is the same.
 * Programming of the LCD via the i2 port expander hasn't changed too much.
 * The realtime clock code hasn't changed much.
+
+Things I've changed:
+* Updates to support Arduino 1.0
+* Function and variable names so they make more sense to me.
+* Fewer global variables and more functions with return values.
+* Fewer cross-deps between functions and files.
+* Separate files for LCD, RTC, Volume and other functions.
+* Just about everything to do with the UI.
+
+Things I've added:
+* Code to init and control the WM8741 DAC.
+* Code to select the input on the CS8416 Mux.
+* Large numeral font for clock, volume and input display.
+
+Things I've removed:
+* Many configuration options.
+* Code to support AMB input switching etc.
+
+
