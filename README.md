@@ -8,9 +8,9 @@ Linux Works and AMB Labs. Originally intended for the AMB Labs components I
 have used it to control the Twisted Pear WM8741 based DAC and CS8416
 based multiplexer.
 
-LinuxWorks Labs: http://www.netstuff.org/audio/
-AMB Laboratories: http://www.amb.org/audio/
-Twisted Pear Audio: http://www.twistedpearaudio.com/
+* LinuxWorks Labs: http://www.netstuff.org/audio/
+* AMB Laboratories: http://www.amb.org/audio/
+* Twisted Pear Audio: http://www.twistedpearaudio.com/
 
 Source Code
 -----------
