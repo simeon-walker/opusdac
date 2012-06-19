@@ -48,8 +48,9 @@
 #define IFC_INPUT3                   9
 #define IFC_INPUT4                  10
 #define IFC_SET_CLOCK               11
+#define IFC_BACKLIGHT               12
 // don't touch this, it has to be the last entry in this list
-#define IFC_MAX                     12   // this must always be the last in the list
+#define IFC_MAX                     13   // this must always be the last in the list
 
 #define MY_MAGIC                  0xf4   // if magic doesn't match the re-init eeprom
 /*
@@ -75,8 +76,8 @@
 
 // IR learned keycodes (as 4-byte longwords, each) are stored here.
 // table is IFC_MAX+1 deep, with each record being 4 bytes.
-// currently, IFC_MAX is 11 and so 12*4=48 (48 bytes taken up in EEPROM out of 1024bytes max on arduino)
-#define EEPROM_IR_LEARNED_BASE      50  // last byte = 98
+// currently, IFC_MAX is 13 and so 13*4=52
+#define EEPROM_IR_LEARNED_BASE      50  // last byte = 102
 
 // end EEPROM defs
 

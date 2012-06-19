@@ -37,8 +37,10 @@ extern void motor_drive(byte ccw, byte cw);
 
 extern boolean toggle_mute (boolean mute_flag);
 extern byte update_volume (byte new_vol);
+extern void draw_volume (byte volume);
+extern byte next_dac_filter (byte curr_filter);
+
 byte volume_up (byte curr_vol);
 byte volume_down (byte curr_vol);
-extern byte next_dac_filter (byte curr_filter);
 
 #endif // _VM_COMMON_H_

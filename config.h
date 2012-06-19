@@ -48,11 +48,11 @@
 #define MOTOR_POT_ROTATE_CW             16              // 3rd analog port used as pwm/digital-16
 #define MOTOR_POT_ROTATE_CCW            17              // 4th analog port used as pwm/digital-17
 
-#define BACKLIGHT_OFF                1
-#define BACKLIGHT_AUTODIM            2
-#define BACKLIGHT_ON                 3
-#define BACKLIGHT_MIN               (100)
-#define BACKLIGHT_MAX               (255)
+#define BACKLIGHT_OFF                   1
+#define BACKLIGHT_AUTODIM               2
+#define BACKLIGHT_ON                    3
+#define BACKLIGHT_MIN                   (100)
+#define BACKLIGHT_MAX                   (255)
 
 // vol control enum value equates
 #define VOL_MIN                     (0)

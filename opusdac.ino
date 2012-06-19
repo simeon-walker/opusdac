@@ -63,12 +63,14 @@ void handle_keys_standby (void);
 
 byte scan_front_button (void);
 byte check_config_button (unsigned long timeout);
+void next_backlight_mode (void);
 unsigned long get_IR_key (void);
-void draw_IR_prompt (int idx);
-
 void select_input (byte);
+
+void draw_input (byte input);
 void draw_status (void);
 void draw_clock (byte admin_forced);
+void draw_IR_prompt (int idx);
 void blink_led13 (byte on_off_flag);
 
 // globals
@@ -96,12 +98,12 @@ char fl_st_input_two[]      PROGMEM = "Input 2";
 char fl_st_input_three[]    PROGMEM = "Input 3";
 char fl_st_input_four[]     PROGMEM = "Input 4";
 char fl_st_set_clock[]      PROGMEM = "Set Clock";
-// (end of IR learn key prompts)
+char fl_st_backlight[]      PROGMEM = "Backlight";
 char fl_st_null[]           PROGMEM = "";
 
 PROGMEM  char *fl_st_IR_learn[] = {
-    fl_st_volume_up,        // 1    
-    fl_st_volume_down,      // 2 
+    fl_st_volume_up,        // 1
+    fl_st_volume_down,      // 2
     fl_st_mute,             // 3
     fl_st_power_toggle,     // 4
     fl_st_power_on,         // 5
@@ -112,8 +114,9 @@ PROGMEM  char *fl_st_IR_learn[] = {
     fl_st_input_three,      // 10
     fl_st_input_four,       // 11
     fl_st_set_clock,        // 12
+    fl_st_backlight,        // 13
     // end sentinel
-    fl_st_null              // 13
+    fl_st_null              // 14
 };
 
 unsigned long ir_code_cache[IFC_MAX];
@@ -355,6 +358,11 @@ void handle_keys_standby (void) {                       // key handling when sys
         blink_led13(1);
         power_on_logic(0);                              // 0 = no banner, quick startup
         delay(400);
+    } else if (key == ir_code_cache[IFC_BACKLIGHT]) {
+        blink_led13(1);
+        next_backlight_mode();
+        EEPROM.write(EEPROM_STANDBY_BACKLIGHT_MODE, lcd.backlight_mode);
+        draw_clock(1);                                  // Force redraw of clock
     }
     blink_led13(0);
     irrecv.resume();                                    // we just consumed one key; 'start' to receive the next value
@@ -436,8 +444,15 @@ void handle_keys_normal (void) {                        // key handling when sys
         delay(400);
     } else if (key == ir_code_cache[IFC_SET_CLOCK]) {
         blink_led13(1);
-        lcd.clear();    // TODO clock setting
+        // TODO clock setting
         delay(400);
+    } else if (key == ir_code_cache[IFC_BACKLIGHT]) {
+        blink_led13(1);
+        next_backlight_mode();
+        EEPROM.write(EEPROM_NORMAL_BACKLIGHT_MODE, lcd.backlight_mode);
+        draw_input(current_input);
+        draw_status();
+        draw_volume(current_volume);
     }
     /* ************************************************************************************** *
      * common exit: everyone goes here to have their LED turned off and have IR rescan itself *
@@ -448,6 +463,31 @@ void handle_keys_normal (void) {                        // key handling when sys
 }
 
 /*************************************** End of main code *************************************/
+
+void next_backlight_mode(void) {
+    lcd.clear();
+    lcd.send_string("Backlight Mode:", LCD_LINE1);
+
+    if (lcd.backlight_mode == BACKLIGHT_OFF) {
+        lcd.restore_backlight();
+        lcd.backlight_mode = BACKLIGHT_AUTODIM;
+        lcd.send_string(" AUTO-DIM", LCD_LINE2);
+
+    } else if (lcd.backlight_mode == BACKLIGHT_AUTODIM) {
+        lcd.restore_backlight();
+        lcd.backlight_mode = BACKLIGHT_ON;
+        lcd.send_string(" ON", LCD_LINE2);
+
+    } else if (lcd.backlight_mode == BACKLIGHT_ON) {
+        lcd.backlight_mode = BACKLIGHT_OFF;
+        lcd.send_string(" OFF", LCD_LINE2);
+
+    } else {
+        lcd.backlight_mode = BACKLIGHT_AUTODIM;
+    }
+    delay(1000);
+    lcd.clear();
+}
 
 byte scan_front_button (void) {
     byte in_keys = lcd.ReadInputKeys();
@@ -474,13 +514,11 @@ void cache_ir_codes (void) {
     for (idx=0; idx <= IFC_MAX; idx++) {
         ir_code_cache[idx] = EEread_long(EEPROM_IR_LEARNED_BASE + (idx * sizeof(long)));
     }
-    return;
 }
 
 void draw_IR_prompt (int idx) {
     lcd.clear_line(LCD_LINE2);
     display_progmem_string_to_lcd_P( &(fl_st_IR_learn[idx]), LCD_LINE2);
-    return;
 }
 
 void draw_clock (byte admin_forced) {
@@ -501,7 +539,6 @@ void draw_clock (byte admin_forced) {
 
         last_mins = rtc.Mins;
     }
-    return;
 }
 
 void select_input (byte new_input) {
@@ -517,7 +554,11 @@ void select_input (byte new_input) {
     update_volume(current_volume);                                  // set volume for new input (doesn't affect mute)
 
     current_input = new_input;                                      // record new input
-    lcd.draw_bignum_at(current_input+'1', 0);      // cols 0,1,2
+    draw_input(new_input);
+}
+
+void draw_input (byte input) {
+    lcd.draw_bignum_at(input+'1', 0);           // cols 0,1,2
 }
 
 void read_eeprom_oper_values (void) {
@@ -530,7 +571,6 @@ void read_eeprom_oper_values (void) {
     } else {
         lcd.backlight_mode      = EEPROM.read(EEPROM_STANDBY_BACKLIGHT_MODE);
     }
-    return;
 }
 
 void draw_status () {
@@ -541,7 +581,6 @@ void draw_status () {
     }
     sprintf(string_buf, "f:%0d ", current_filter);
     lcd.send_string(string_buf, LCD_LINE2+4);
-
 }
 
 void init_eeprom (void) {
@@ -551,7 +590,6 @@ void init_eeprom (void) {
     EEPROM.write(EEPROM_DAC_FILTER, 2);
     EEPROM.write(EEPROM_NORMAL_BACKLIGHT_MODE, BACKLIGHT_ON);
     EEPROM.write(EEPROM_STANDBY_BACKLIGHT_MODE, BACKLIGHT_AUTODIM);
-    return;
 }
 
 // end sketch
