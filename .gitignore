@@ -1,0 +1,6 @@
+*.o
+*~
+opusdac.cpp
+opusdac.cpp.elf
+opusdac.cpp.hex
+arduino_core.a
