@@ -28,7 +28,7 @@
 #include "config.h"
 #include "dac_hw.h"
 
-// The write to WM8741 DAC routine
+// The write to WM8741 DAC
 void wm8741_write(byte reg, byte val) {
     Wire.beginTransmission(WM8741_I2C_ADDR);
     Wire.write(reg);
@@ -36,7 +36,7 @@ void wm8741_write(byte reg, byte val) {
     Wire.endTransmission();
 }
 
-void wm8741_init (void) {
+void dac_init (void) {
     delay(200);
     wm8741_write(WM8741_REG_RESET, WM8741_RESET);        // reset chip
     delay(200);
@@ -48,7 +48,7 @@ void wm8741_init (void) {
 }
 
 
-void wm8741_set_volume (byte vol) {
+void dac_set_volume (byte vol) {
     // write lower 5 bits of attenuation
     wm8741_write(WM8741_REG_DACLLSB, ( (VOL_MAX-vol) & 0x07 ) << 3 );
     // write upper 5 bits of attenuation (and update)
@@ -56,8 +56,8 @@ void wm8741_set_volume (byte vol) {
 }
 
 
-void wm8741_mute (byte mute_flag) {
-    if (mute_flag == 1) {
+void dac_mute (byte mute_flag) {
+    if (mute_flag) {
         wm8741_write(WM8741_REG_VOLCTRL, WM8741_VOLMUTE);
     } else {
         wm8741_write(WM8741_REG_VOLCTRL, WM8741_VOLDEFS);

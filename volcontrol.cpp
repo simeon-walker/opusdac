@@ -50,13 +50,6 @@ int pot_read_smoothed () {
     return (avg_port_value);
 }
 
-void draw_volume (byte volume) {
-    byte ms, ls;
-    bin2ascii(volume, &ms, &ls);
-    lcd.draw_bignum_at(ms, 9);                  // cols 9,10,11
-    lcd.draw_bignum_at(ls, 13);                 // cols 13,14,15
-}
-
 byte handle_pot (byte curr_vol) {
     byte new_vol = curr_vol;
     int pot_value;
@@ -143,50 +136,6 @@ void motor_drive(byte cw, byte ccw) {
     if (cw==HIGH and ccw==HIGH) return;
     digitalWrite(MOTOR_POT_ROTATE_CCW, ccw);
     digitalWrite(MOTOR_POT_ROTATE_CW, cw);
-}
-
-boolean toggle_mute (boolean mute_flag) {
-    lcd.restore_backlight();
-#ifdef MOTOR_POT_ENABLED
-    motor_drive(LOW, LOW);
-#endif
-    if ( mute_flag==1 ) {
-        mute_flag = 0;
-    } else {
-        mute_flag = 1;
-    }
-    wm8741_mute(mute_flag);
-    return mute_flag;
-}
-
-byte volume_up (byte curr_vol) {
-    if (curr_vol==VOL_MAX) return curr_vol;
-    return (update_volume(curr_vol+1));
-}
-
-byte volume_down (byte curr_vol) {
-    if (curr_vol==VOL_MIN) return curr_vol;
-    return (update_volume(curr_vol-1));
-}
-
-byte update_volume (byte new_vol) {
-    if (new_vol < VOL_MIN) new_vol = VOL_MIN;
-    if (new_vol > VOL_MAX) new_vol = VOL_MAX;
-    draw_volume(new_vol);
-    wm8741_set_volume(new_vol);
-    return new_vol;
-}
-
-byte next_dac_filter (byte curr_filter) {
-    lcd.restore_backlight();
-    if (curr_filter < 5) {
-        curr_filter ++;
-    } else {
-        curr_filter = 1;
-    }
-    EEPROM.write(EEPROM_DAC_FILTER, curr_filter);
-    dac_select_filter(curr_filter);
-    return (curr_filter);
 }
 
 // end volcontrol.cpp

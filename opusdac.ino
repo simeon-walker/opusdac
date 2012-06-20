@@ -65,8 +65,11 @@ byte scan_front_button (void);
 byte check_config_button (unsigned long timeout);
 void next_backlight_mode (void);
 unsigned long get_IR_key (void);
+
+byte update_volume (byte new_vol);
 void select_input (byte);
 
+void draw_volume (byte volume);
 void draw_input (byte input);
 void draw_status (void);
 void draw_clock (byte admin_forced);
@@ -75,10 +78,10 @@ void blink_led13 (byte on_off_flag);
 
 // globals
 byte power;
-boolean mute;
-byte current_volume;
+boolean mute = false;
+byte volume;
 byte current_input = (1);
-byte current_filter = (2);
+byte filter = (2);
 
 // global buffer that anyone can use (for short term)
 char string_buf[STRING_BUF_MAXLEN];    // usually 16+1 (1 for the nullbyte)
@@ -184,7 +187,7 @@ void power_on_logic (boolean cold_start) {
     power = POWER_ON;
     EEPROM.write(EEPROM_POWER, power);
     digitalWrite(DAC_RELAY_PIN, HIGH);                  // turn on DAC
-    wm8741_init();                                      // init dac to mute and min vol
+    dac_init();                                         // init dac to mute and min vol
 
     if (cold_start) {
         lcd.clear();
@@ -196,7 +199,7 @@ void power_on_logic (boolean cold_start) {
     }
     lcd.clear();
     select_input(current_input);                        // Select input, set volume and draw display
-    dac_select_filter(current_filter);                  // Set DAC filter mode
+    dac_select_filter(filter);                          // Set DAC filter mode
     draw_status();
     digitalWrite(AMP_RELAY_PIN, HIGH);                  // push Amp 'button'
     delay(250);
@@ -216,7 +219,7 @@ void power_off_logic (void) {
 #ifdef MOTOR_POT_ENABLED
     motor_drive(LOW, LOW);                              // Stop motor
 #endif
-    wm8741_mute(1);                                     // total hardware mute
+    dac_mute(true);                                     // total hardware mute
     delay(1000);
     lcd.send_string("     DAC Off", LCD_LINE2);
     digitalWrite(DAC_RELAY_PIN, LOW);                   // turn off DAC
@@ -333,9 +336,9 @@ void loop (void) {
         lcd.handle_backlight_auto();
         return;
     }
-    current_volume = handle_pot(current_volume);        // Update volume IFF pot moved
+    volume = handle_pot(volume);        // Update volume IFF pot moved
 #ifdef MOTOR_POT_ENABLED
-    handle_motor_pot(current_volume);                   // always check the motor logic 2nd
+    handle_motor_pot(volume);                   // always check the motor logic 2nd
 #endif
     handle_keys_normal();                               // IR keyscan and case-statement routines
     lcd.handle_backlight_auto();                        // timeout the lcd backlight if we are in the right mode
@@ -391,7 +394,9 @@ void handle_keys_normal (void) {                        // key handling when sys
             return;
         }
         lcd.restore_backlight();                    // not a power-off request, so restore backlight
-        mute = toggle_mute(mute);
+        //mute = toggle_mute(mute);
+        mute = !mute;
+        dac_mute(mute);
         draw_status();
         delay(250);                                 // Debounce switch
         irrecv.resume();                            // we just consumed one key; 'start' to receive the next value
@@ -402,15 +407,21 @@ void handle_keys_normal (void) {                        // key handling when sys
         return;                                     // try again to sync up on an IR start-pulse
     } else if (key == ir_code_cache[IFC_VOLUME_UP]) {
         blink_led13(1);
-        current_volume = volume_up(current_volume);
-        delay(VOL_DELAY_SHORT);
+        if (volume < VOL_MAX) {
+            volume = update_volume(volume+1);
+            delay(VOL_DELAY_SHORT);
+        }
     } else if (key == ir_code_cache[IFC_VOLUME_DOWN]) {
         blink_led13(1);
-        current_volume = volume_down(current_volume);
-        delay(VOL_DELAY_SHORT);
+        if (volume > VOL_MIN) {
+            volume = update_volume(volume-1);
+            delay(VOL_DELAY_SHORT);
+        }
     } else if (key == ir_code_cache[IFC_MUTE]) {
         blink_led13(1);
-        mute = toggle_mute(mute);
+        //mute = toggle_mute(mute);
+        mute = !mute;
+        dac_mute(mute);
         draw_status();
         delay(400);
     } else if (key == ir_code_cache[IFC_INPUT1]) {
@@ -439,7 +450,14 @@ void handle_keys_normal (void) {                        // key handling when sys
         delay(400);
     } else if (key == ir_code_cache[IFC_NEXT_FILTER]) {
         blink_led13(1);
-        current_filter = next_dac_filter(current_filter);
+        lcd.restore_backlight();
+        if (filter < 5) {
+            filter++;
+        } else {
+            filter = 1;
+        }
+        dac_select_filter(filter);
+        EEPROM.write(EEPROM_DAC_FILTER, filter);
         draw_status();
         delay(400);
     } else if (key == ir_code_cache[IFC_SET_CLOCK]) {
@@ -452,7 +470,7 @@ void handle_keys_normal (void) {                        // key handling when sys
         EEPROM.write(EEPROM_NORMAL_BACKLIGHT_MODE, lcd.backlight_mode);
         draw_input(current_input);
         draw_status();
-        draw_volume(current_volume);
+        draw_volume(volume);
     }
     /* ************************************************************************************** *
      * common exit: everyone goes here to have their LED turned off and have IR rescan itself *
@@ -541,17 +559,32 @@ void draw_clock (byte admin_forced) {
     }
 }
 
+void draw_volume (byte volume) {
+    byte ms, ls;
+    bin2ascii(volume, &ms, &ls);
+    lcd.draw_bignum_at(ms, 9);                  // cols 9,10,11
+    lcd.draw_bignum_at(ls, 13);                 // cols 13,14,15
+}
+
+byte update_volume (byte new_vol) {
+    if (new_vol < VOL_MIN) new_vol = VOL_MIN;
+    if (new_vol > VOL_MAX) new_vol = VOL_MAX;
+    draw_volume(new_vol);
+    dac_set_volume(new_vol);
+    return new_vol;
+}
+
 void select_input (byte new_input) {
     if (new_input > MUX_INPUT_COUNT-1) {                    // if we had a crazy value, force it to be the first port
         new_input = 0;
     }
-    EEPROM.write(EEPROM_INPUT_BASE+current_input, current_volume);  // save volume of current input
+    EEPROM.write(EEPROM_INPUT_BASE+current_input, volume);  // save volume of current input
 
     mux_select_input(new_input);
     EEPROM.write(EEPROM_INPUT_SEL, new_input);                      // save new input selection
 
-    current_volume = EEPROM.read(EEPROM_INPUT_BASE+new_input);      // read saved volume of new input
-    update_volume(current_volume);                                  // set volume for new input (doesn't affect mute)
+    volume = EEPROM.read(EEPROM_INPUT_BASE+new_input);      // read saved volume of new input
+    update_volume(volume);                                  // set volume for new input (doesn't affect mute)
 
     current_input = new_input;                                      // record new input
     draw_input(new_input);
@@ -563,9 +596,9 @@ void draw_input (byte input) {
 
 void read_eeprom_oper_values (void) {
     power                       = EEPROM.read(EEPROM_POWER);        // Last power state
-    current_filter              = EEPROM.read(EEPROM_DAC_FILTER);
+    filter                      = EEPROM.read(EEPROM_DAC_FILTER);
     current_input               = EEPROM.read(EEPROM_INPUT_SEL);
-    current_volume              = EEPROM.read(EEPROM_INPUT_BASE+current_input);
+    volume                      = EEPROM.read(EEPROM_INPUT_BASE+current_input);
     if (power == POWER_ON) {
         lcd.backlight_mode      = EEPROM.read(EEPROM_NORMAL_BACKLIGHT_MODE);
     } else {
@@ -579,7 +612,7 @@ void draw_status () {
     } else {
         lcd.send_string("    ", LCD_LINE1+4);
     }
-    sprintf(string_buf, "f:%0d ", current_filter);
+    sprintf(string_buf, "f:%0d ", filter);
     lcd.send_string(string_buf, LCD_LINE2+4);
 }
 
