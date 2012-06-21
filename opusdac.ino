@@ -198,6 +198,7 @@ void power_on_logic (boolean cold_start) {
         }
     }
     lcd.clear();
+    lcd.backlight_mode = EEPROM.read(EEPROM_NORMAL_BACKLIGHT_MODE);
     select_input(current_input);                        // Select input, set volume and draw display
     dac_select_filter(filter);                          // Set DAC filter mode
     draw_status();
@@ -394,7 +395,6 @@ void handle_keys_normal (void) {                        // key handling when sys
             return;
         }
         lcd.restore_backlight();                    // not a power-off request, so restore backlight
-        //mute = toggle_mute(mute);
         mute = !mute;
         dac_mute(mute);
         draw_status();
@@ -419,7 +419,6 @@ void handle_keys_normal (void) {                        // key handling when sys
         }
     } else if (key == ir_code_cache[IFC_MUTE]) {
         blink_led13(1);
-        //mute = toggle_mute(mute);
         mute = !mute;
         dac_mute(mute);
         draw_status();

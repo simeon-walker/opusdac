@@ -50,7 +50,6 @@
 #define WM8741_RESET        0x00    // value for reset reg
 
 extern void dac_init (void);
-//extern void wm8741_write (byte reg, byte val);
 extern void dac_set_volume (byte vol);
 extern void dac_mute (boolean mute_flag);
 extern void dac_select_filter (byte filter);
