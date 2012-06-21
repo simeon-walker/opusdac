@@ -45,7 +45,6 @@ volatile irparams_t irparams;
 IRrecv::IRrecv (int recvpin) {
     irparams.recvpin = recvpin;
     irparams.blinkflag = 0;                             // turn it off by default
-    return;
 }
 
 void IRrecv::enableIRIn (void) {                        // initialization
@@ -64,7 +63,6 @@ void IRrecv::enableIRIn (void) {                        // initialization
     irparams.rcvstate = STATE_IDLE;                     // initialize state machine variables
     irparams.rawlen = 0;
     pinMode(irparams.recvpin, INPUT);                   // set pin modes
-    return;
 }
 
 // TIMER2 interrupt code to collect raw data.
@@ -129,8 +127,6 @@ ISR (TIMER2_OVF_vect) {
         }
         break;
     }
-
-    return;
 }
 
 void IRrecv::resume (void) {
@@ -142,7 +138,6 @@ void IRrecv::resume (void) {
     irparams.rawlen = 0;
     irparams.timer = 0;
     //results.value = 0;
-    return;
 }
 
 // Decodes the received IR message
@@ -218,4 +213,4 @@ unsigned long get_IR_key (void) {
         return 0;                                       // no key pressed
     }
 }
-//
+

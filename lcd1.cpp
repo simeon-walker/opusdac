@@ -65,7 +65,6 @@ LCDI2C4Bit::LCDI2C4Bit (byte devI2CAddress, byte num_lines, byte lcdwidth, byte 
     lcd_inactivity_timeout = 4;                         // in seconds: how long do we keep the 'bright' setting before we fade
     backlight_admin = 0;                                // administratively set (enable auto timeout; normal mode)
     pinMode(myBacklightPin, OUTPUT);                    // pwm backlight
-    return;
 }
 
 void LCDI2C4Bit::init (void) {
@@ -89,12 +88,10 @@ void LCDI2C4Bit::init (void) {
     delayMicroseconds(60);
     command(0x01);                                      // clear display
     lcd_in_use_flag = 0;                                // clear that mutex (so that the IR isr CAN now do things)
-    return;
 }
 
 void LCDI2C4Bit::SetInputKeysMask (byte input_keys_mask) {
     myInputKeysMask = input_keys_mask;
-    return;
 }
 
 #ifdef LOCAL_MCP_DRIVER
@@ -103,7 +100,6 @@ void LCDI2C4Bit::SetMCPReg (byte reg, byte val) {       // set one byte using th
     Wire.write(reg);
     Wire.write(val);
     Wire.endTransmission();
-    return;
 }
 
 byte LCDI2C4Bit::GetMCPReg (byte reg) {                 // call the 'wire' routine (i2c) and get 1 byte back
@@ -136,7 +132,6 @@ void LCDI2C4Bit::SendToLCD (byte data) {
     data ^= 0x80; // 'enable' bit OFF on LCD
     SetMCPReg(MCP_REG_OLAT, data);
     delayMicroseconds(9);
-    return;
 }
 
 // higher layer interface; this takes an 8-bit data and makes 2 calls to send to the lcd, 4 bits at a time
@@ -147,7 +142,6 @@ void LCDI2C4Bit::WriteLCDByte (byte bdata) {
     SendToLCD (bdata & 0x0F);
     delayMicroseconds(9);
     lcd_in_use_flag = 0;                                  // clear that mutex (so that the IR isr CAN now do things)
-    return;
 }
 
 // 'write' sends character data, setting RS high (the other routine, 'commands' sends non-char data)
@@ -155,7 +149,6 @@ void LCDI2C4Bit::write (byte value) {
     dataPlusMask |= 0x10; // RS is set
     WriteLCDByte(value);
     dataPlusMask ^= 0x10; // RS is cleared
-    return;
 }
 
 // 'command' leaves RS low when it sends bytes
@@ -163,14 +156,12 @@ void LCDI2C4Bit::command (byte command) {
     // RS - leave low
     WriteLCDByte(command);
     delayMicroseconds(800);
-    return;
 }
 
 void LCDI2C4Bit::print (char value[]) {
     for (char *p = value; *p != 0; p++) {
         write(*p);
     }
-    return;
 }
 
 int row_offsets[] = { 0x00, 0x40, 0x14, 0x54 };
@@ -178,7 +169,6 @@ int row_offsets[] = { 0x00, 0x40, 0x14, 0x54 };
 // row,col are both zero-based
 void LCDI2C4Bit::cursorTo (byte row, byte col) {
     command(0x80 | (col + row_offsets[row]));
-    return;
 }
 
 // 'str' MUST be null-terminated
@@ -188,7 +178,6 @@ void LCDI2C4Bit::send_string (const char *str, const byte addr) {
         command(addr); // cursor pos
     }
     print((char *)str);
-    return;
 }
 
 // 'str' MUST be null-terminated
@@ -201,7 +190,6 @@ void LCDI2C4Bit::send_string_P (PROGMEM char *p_ptr, const byte addr) {
     strncpy_P(string_buf, p_ptr, STRING_BUF_MAXLEN-1);
     string_buf[STRING_BUF_MAXLEN] = '\0';  // safety
     send_string(string_buf, 0);
-    return;
 }
 
 void LCDI2C4Bit::load_bignum (void) {
@@ -218,7 +206,6 @@ void LCDI2C4Bit::load_bignum (void) {
         }
     }
     command(0x80);                                      // reset to dram mode
-    return;
 }
 // char_pos: 0..15 (native lcd columns)
 // val: ' ' or '0'..'9'
@@ -241,7 +228,6 @@ void LCDI2C4Bit::draw_bignum_at (byte val, byte char_pos) {
             write(pgm_read_byte(&(bignumchars2[val + j])));
         }
     }
-    return;
 }
 
 
@@ -260,17 +246,14 @@ void LCDI2C4Bit::turn_display_off (void) {
     analogWrite(myBacklightPin, 0);                        // zero brightness
     backlight_currently_on = 0;                            // flag it as off now
     clear();
-    return;
 }
 
 void LCDI2C4Bit::turn_display_on (void) {
     analogWrite(myBacklightPin, backlight_max);
-    return;
 }
 
 void LCDI2C4Bit::backLight (byte value) {
     analogWrite(myBacklightPin, value);                    // 0..255 gets us 'dark' to 'very bright'
-    return;
 }
 
 void LCDI2C4Bit::fade_backlight_on (void) {
@@ -281,7 +264,6 @@ void LCDI2C4Bit::fade_backlight_on (void) {
     backlight_currently_on = 1;                            // flag it as now on
     seconds = 0;                                           // reset things so we start the count-down all over
     one_second_counter_ts = millis();
-    return;
 }
 
 void LCDI2C4Bit::fade_backlight_to_dim (void) {
@@ -290,7 +272,6 @@ void LCDI2C4Bit::fade_backlight_to_dim (void) {
         delay(2);
     }
     backlight_currently_on = 0;                            // flag it as now off
-    return;
 }
 
 void LCDI2C4Bit::fade_backlight_off (void) {
@@ -300,7 +281,6 @@ void LCDI2C4Bit::fade_backlight_off (void) {
     }
     backlight_currently_on = 0;                            // flag it as now off
     clear();
-    return;
 }
 
 void LCDI2C4Bit::restore_backlight (void) {
@@ -310,7 +290,6 @@ void LCDI2C4Bit::restore_backlight (void) {
     }
     seconds = 0;                                           // reset things so we start the count-down all over
     one_second_counter_ts = millis();
-    return;
 }
 
 void LCDI2C4Bit::handle_backlight_auto (void) {            // backlight time-out logic
@@ -327,7 +306,6 @@ void LCDI2C4Bit::handle_backlight_auto (void) {            // backlight time-out
             }
         }
     }
-    return;
 }
 
 
@@ -335,7 +313,6 @@ void display_progmem_string_to_lcd_P (PROGMEM char *p_ptr[], const byte addr) {
     char *p;
     p = (char *)pgm_read_word(p_ptr);                      // read the addr of the first byte of the text
     lcd.send_string_P(p, addr);
-    return;
 }
 
 void lcd_print_long_hex (long p_value) {
@@ -360,8 +337,6 @@ void lcd_print_long_hex (long p_value) {
     hex2ascii(byte1, &ms, &ls);
     lcd.write(ms);
     lcd.write(ls);
-
-    return;
 }
 
 void blink_led13 (byte on_off_flag) {
@@ -370,7 +345,6 @@ void blink_led13 (byte on_off_flag) {
     } else {
         PORTB &= ((byte)B11011111);  // turn pin 13 LED off
     }
-    return;
 }
 
-// end lcd1_libs.cpp
+// end lcd1.cpp

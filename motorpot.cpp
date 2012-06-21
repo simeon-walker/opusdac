@@ -31,7 +31,7 @@
 #include "dac_hw.h"
 #include "util.h"
 
-#include "volcontrol.h"
+#include "motorpot.h"
 #include "volcontrol_defs.h"   // defines and constants
 
 byte pot_state = MOTOR_INIT;
@@ -64,7 +64,6 @@ byte handle_pot (byte curr_vol) {
             if (new_vol != curr_vol) {
                 lcd.restore_backlight();
                 update_volume(new_vol);
-                // pot_last_seen = pot_value;
                 vol_last_seen = new_vol;
             }
         }
@@ -129,7 +128,6 @@ void handle_motor_pot (byte target_vol) {                           // a state-d
     default:
         ;
     }
-    return;
 }
 #endif
 

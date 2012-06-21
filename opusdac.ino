@@ -40,7 +40,7 @@
 // local includes
 #include "config.h"
 #include "lcd1.h"
-#include "volcontrol.h"
+#include "motorpot.h"
 #include "volcontrol_defs.h"
 #include "irremote.h"
 #include "rtc.h"
@@ -179,7 +179,6 @@ void setup (void) {                                     // **** REAL POWER-ON ST
             lcd.restore_backlight();
         }
     }
-    return;
 }
 
 // this routine assumes the LCD display is init'd and available for us to write status messages to
@@ -205,7 +204,6 @@ void power_on_logic (boolean cold_start) {
     digitalWrite(AMP_RELAY_PIN, HIGH);                  // push Amp 'button'
     delay(250);
     digitalWrite(AMP_RELAY_PIN, LOW);                   // release Amp 'button'
-    return;
 }
 
 
@@ -228,7 +226,6 @@ void power_off_logic (void) {
     lcd.clear();
     lcd.backlight_mode = EEPROM.read(EEPROM_STANDBY_BACKLIGHT_MODE);
     draw_clock(1);                                      // Force first draw of clock
-    return;
 }
 
 /* we get here if the user pressed the magic 'config button' in a short window at bootup time */
@@ -325,7 +322,6 @@ void enter_setup_mode (void) {
     lcd.send_string("Completed.", LCD_LINE1);
     delay(500);
     lcd.clear();
-    return;
 }
 
 void loop (void) {
@@ -334,16 +330,14 @@ void loop (void) {
             draw_clock(0);
         }
         handle_keys_standby();
-        lcd.handle_backlight_auto();
-        return;
-    }
-    volume = handle_pot(volume);        // Update volume IFF pot moved
+    } else {
+        volume = handle_pot(volume);                    // Update volume IFF pot moved
 #ifdef MOTOR_POT_ENABLED
-    handle_motor_pot(volume);                   // always check the motor logic 2nd
+        handle_motor_pot(volume);                       // always check the motor logic 2nd
 #endif
-    handle_keys_normal();                               // IR keyscan and case-statement routines
+        handle_keys_normal();                           // IR keyscan and case-statement routines
+    }
     lcd.handle_backlight_auto();                        // timeout the lcd backlight if we are in the right mode
-    return;
 }
 
 
@@ -370,7 +364,6 @@ void handle_keys_standby (void) {                       // key handling when sys
     }
     blink_led13(0);
     irrecv.resume();                                    // we just consumed one key; 'start' to receive the next value
-    return;
 }
 
 
@@ -476,7 +469,6 @@ void handle_keys_normal (void) {                        // key handling when sys
      * ************************************************************************************** */
     blink_led13(0);
     irrecv.resume(); // we just consumed one key; 'start' to receive the next value
-    return;
 }
 
 /*************************************** End of main code *************************************/

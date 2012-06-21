@@ -132,7 +132,7 @@ LIB_WIRE_UTIL	= $(ARDUINO_ROOT)/libraries/Wire/utility
 #
 MY_OBJS = \
 	$(PROG_NAME).cpp.o \
-	volcontrol.cpp.o \
+	motorpot.cpp.o \
 	lcd1.cpp.o \
 	irremote.cpp.o \
 	rtc.cpp.o \
@@ -144,7 +144,7 @@ MY_OBJS = \
 #
 MY_SRCS = \
 	$(PROG_NAME).cpp \
-	volcontrol.cpp \
+	motorpot.cpp \
 	lcd1.cpp \
 	irremote.cpp \
 	rtc.cpp \
@@ -156,7 +156,7 @@ MY_SRCS = \
 #
 MY_INCLUDE_FILES = \
 	config.h \
-	volcontrol.h \
+	motorpot.h \
 	volcontrol_defs.h \
 	lcd1.h \
 	irremote.h \
@@ -277,7 +277,7 @@ $(PROG_NAME).cpp:	$(PROG_NAME).ino
 $(PROG_NAME).cpp.o:	$(PROG_NAME).cpp $(MY_INCLUDE_FILES)
 	$(CXX) $(MY_INCLUDE_PATHS) -c $(PROG_NAME).cpp -o $(PROG_NAME).cpp.o
 
-volcontrol.cpp.o:	volcontrol.cpp $(MY_INCLUDE_FILES)
+motorpot.cpp.o:	motorpot.cpp $(MY_INCLUDE_FILES)
 	$(CXX) $(MY_INCLUDE_PATHS) $< -o $@
 
 lcd1.cpp.o:	lcd1.cpp $(MY_INCLUDE_FILES)

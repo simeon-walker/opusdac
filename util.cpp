@@ -30,13 +30,11 @@
 void bcd2ascii (const byte val, byte *ms, byte *ls) {
     *ms = (val >> 4)   + '0';
     *ls = (val & 0x0f) + '0';
-    return;
 }
 
 void bin2ascii (const byte val, byte *ms, byte *ls) {
     *ms = val / 10 + '0';
     *ls = val % 10 + '0';
-    return;
 }
 
 // BCD to binary
@@ -68,7 +66,6 @@ void dec2bin (byte b, byte num_bits, char string_buf[]) {
         b >>= 1;
     }
     string_buf[num_bits] = '\0';
-    return;
 }
 
 // converts the string '0101...' to a byte value 0..255
@@ -97,8 +94,6 @@ void hex2ascii (const byte val, byte *ms, byte *ls) {
     sprintf(hex_buf, "%02x ", val);
     *ms = hex_buf[0];
     *ls = hex_buf[1];
-
-    return;
 }
 
 // this fixes a bug in the arduino supplied map function.  you would almost never reach the very 'top' of the range
@@ -117,8 +112,6 @@ void EEwrite_long (int p_address, unsigned long p_value) {
     EEPROM.write(p_address + 1, byte2);
     EEPROM.write(p_address + 2, byte3);
     EEPROM.write(p_address + 3, byte4);
-
-    return;
 }
 
 unsigned long EEread_long (int p_address) {

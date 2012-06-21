@@ -52,21 +52,18 @@ void DS1302::init (void) {                              // init the DS1302 realt
     Secs &= B01111111;
     send1302cmd(WriteSecs, Secs);
     send1302cmd(WriteTrickle, TrickleSet);              // begin charging the supercap
-    return;
 }
 
 void DS1302::GetTime (void) {                           // retrieve time from DS1302 chip
     Secs = get1302data(ReadSecs);
     Mins = get1302data(ReadMins);
     Hrs  = get1302data(ReadHrs);
-    return;
 }
 
 void DS1302::SetTime (void) {                           // write time to DS1302 chip
     send1302cmd(WriteHrs,  Hrs);
     send1302cmd(WriteMins, Mins);
     send1302cmd(WriteSecs, Secs);
-    return;
 }
 
 void send1302cmd (unsigned char cmd1, unsigned char cmd2)  {
@@ -78,8 +75,6 @@ void send1302cmd (unsigned char cmd1, unsigned char cmd2)  {
 
     shiftOut(DAT1302_PIN, CLK1302_PIN, LSBFIRST, cmd2);
     digitalWrite(CE1302_PIN, 0);                        // Set CE1302 low
-
-    return;
 }
 
 unsigned char get1302data (unsigned char cmd) {

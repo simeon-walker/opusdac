@@ -82,6 +82,5 @@ void dac_select_filter (byte filter) {
 void mux_select_input (byte input) {
     digitalWrite(MUX_A0_PIN, (input & 0x01 ));         // bit0 of input number (0-3)
     digitalWrite(MUX_A1_PIN, (input & 0x02 ) >> 1 );   // bit1, shifted right for pin value
-    return;
 }
 
