@@ -59,11 +59,12 @@ byte handle_pot (byte curr_vol) {
         pot_value = pot_read_smoothed();
         if ( abs(pot_value - pot_last_seen) > POT_CHANGE_THRESHOLD ) {
             // vol returned only changes when pot has actually moved
+            pot_last_seen = pot_value;
             new_vol = l_map(pot_value, POT_MIN, POT_MAX, VOL_MIN, VOL_MAX);
             if (new_vol != curr_vol) {
                 lcd.restore_backlight();
                 update_volume(new_vol);
-                pot_last_seen = pot_value;
+                // pot_last_seen = pot_value;
                 vol_last_seen = new_vol;
             }
         }
