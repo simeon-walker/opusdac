@@ -32,6 +32,7 @@ to just the Sony protocol.
 
 Things I've changed:
 * Updates to support Arduino 1.0
+* Split IR, RTC and Pot functions into separate files.
 * Function and variable names so they make more sense to me.
 * Fewer global variables and more functions with return values.
 * Fewer cross-deps between functions and files.
