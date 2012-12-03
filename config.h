@@ -48,6 +48,8 @@
 #define MOTOR_POT_ROTATE_CW             16              // 3rd analog port used as pwm/digital-16
 #define MOTOR_POT_ROTATE_CCW            17              // 4th analog port used as pwm/digital-17
 
+#define AMP_RELAY_MS                    150             // Time in ms to activate amp power relay
+
 #define BACKLIGHT_OFF                   1
 #define BACKLIGHT_AUTODIM               2
 #define BACKLIGHT_ON                    3
