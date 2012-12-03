@@ -351,7 +351,7 @@ void handle_keys_standby (void) {                       // key handling when sys
     key = get_IR_key();                                 // we got a valid IR start pulse! fetch the keycode, now.
     if (key == 0) {
         return;                                         // try again to sync up on an IR start-pulse
-    } else if (key == ir_code_cache[IFC_POWER_TOGGLE]) {
+    } else if (key == ir_code_cache[IFC_POWER_TOGGLE] or key == ir_code_cache[IFC_POWER_ON]) {
         lcd.restore_backlight();
         blink_led13(1);
         power_on_logic(0);                              // 0 = no banner, quick startup
