@@ -202,7 +202,7 @@ void power_on_logic (boolean cold_start) {
     dac_select_filter(filter);                          // Set DAC filter mode
     draw_status();
     digitalWrite(AMP_RELAY_PIN, HIGH);                  // push Amp 'button'
-    delay(250);
+    delay(AMP_RELAY_MS);
     digitalWrite(AMP_RELAY_PIN, LOW);                   // release Amp 'button'
 }
 
@@ -213,13 +213,13 @@ void power_off_logic (void) {
     lcd.clear();
     lcd.send_string("     Amp Off", LCD_LINE1);
     digitalWrite(AMP_RELAY_PIN, HIGH);                  // push Amp 'button'
-    delay(250);
+    delay(AMP_RELAY_MS);
     digitalWrite(AMP_RELAY_PIN, LOW);                   // release Amp 'button'
 #ifdef MOTOR_POT_ENABLED
     motor_drive(LOW, LOW);                              // Stop motor
 #endif
     dac_mute(true);                                     // total hardware mute
-    delay(1000);
+    delay(DAC_OFF_DELAY);
     lcd.send_string("     DAC Off", LCD_LINE2);
     digitalWrite(DAC_RELAY_PIN, LOW);                   // turn off DAC
     delay(1000);
