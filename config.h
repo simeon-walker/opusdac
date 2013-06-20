@@ -57,6 +57,12 @@
 #define BACKLIGHT_MIN                   (100)
 #define BACKLIGHT_MAX                   (255)
 
+// 16x2 LCD
+#define LCD_COLS                       16
+#define LCD_LINES                       2
+#define LCD_USER_CHARS                  8
+#define LCD_CHAR_ROWS                   8
+
 // vol control enum value equates
 #define VOL_MIN                     (0)
 #define VOL_MAX                     (99)

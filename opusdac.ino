@@ -1,6 +1,6 @@
 /*
  * LCDduino Controller for Twisted Pear Opus DAC and Mux
- * Simeon Walker 2011-2012
+ * Simeon Walker 2011-2013
  *
  * Derived from Volu-Master(tm) by Bryan Levin (Linux-Works Labs)
  * Copyright (c) 2009-2011 Bryan Levin
@@ -30,7 +30,7 @@
 #include <avr/sleep.h>
 #include <avr/eeprom.h>
 #include <avr/interrupt.h>
-#include <avr/pgmspace.h>
+//#include <avr/pgmspace.h>
 #include <util/delay.h>
 #include <util/atomic.h>
 #include <string.h>
@@ -39,10 +39,12 @@
 
 // local includes
 #include "config.h"
+#include "opusdac_defs.h"
+
 #include "lcd1.h"
 #include "motorpot.h"
-#include "volcontrol_defs.h"
 #include "irremote.h"
+#include "irlearn.h"
 #include "rtc.h"
 #include "dac_hw.h"
 #include "util.h"
@@ -57,14 +59,11 @@ void power_off_logic (void);
 void power_on_logic (boolean cold_start);
 void enter_setup_mode (void);
 void read_eeprom_oper_values (void);
-void cache_ir_codes (void);
 void handle_keys_normal (void);
 void handle_keys_standby (void);
 
-byte scan_front_button (void);
-byte check_config_button (unsigned long timeout);
+boolean check_config_button (unsigned long timeout);
 void next_backlight_mode (void);
-unsigned long get_IR_key (void);
 
 byte update_volume (byte new_vol);
 void select_input (byte);
@@ -73,62 +72,18 @@ void draw_volume (byte volume);
 void draw_input (byte input);
 void draw_status (void);
 void draw_clock (byte admin_forced);
-void draw_IR_prompt (int idx);
 void blink_led13 (byte on_off_flag);
 
 // globals
-byte power;
+boolean power_on = false;
 boolean mute = false;
 byte volume;
 byte current_input = (1);
 byte filter = (2);
 
-// global buffer that anyone can use (for short term)
-char string_buf[STRING_BUF_MAXLEN];    // usually 16+1 (1 for the nullbyte)
-
-// 'flash string table' string literals on the arduino, keeping strings in FLASH can save run-ram
-
-// IR learn key names
-char fl_st_volume_up[]      PROGMEM = "Volume Up";
-char fl_st_volume_down[]    PROGMEM = "Volume Down";
-char fl_st_mute[]           PROGMEM = "Mute";
-char fl_st_power_toggle[]   PROGMEM = "Power Toggle";
-char fl_st_power_on[]       PROGMEM = "Power On";
-char fl_st_power_off[]      PROGMEM = "Power Off";
-char fl_st_next_filter[]    PROGMEM = "Next Filter";
-char fl_st_input_one[]      PROGMEM = "Input 1";
-char fl_st_input_two[]      PROGMEM = "Input 2";
-char fl_st_input_three[]    PROGMEM = "Input 3";
-char fl_st_input_four[]     PROGMEM = "Input 4";
-char fl_st_set_clock[]      PROGMEM = "Set Clock";
-char fl_st_backlight[]      PROGMEM = "Backlight";
-char fl_st_null[]           PROGMEM = "";
-
-PROGMEM  char *fl_st_IR_learn[] = {
-    fl_st_volume_up,        // 1
-    fl_st_volume_down,      // 2
-    fl_st_mute,             // 3
-    fl_st_power_toggle,     // 4
-    fl_st_power_on,         // 5
-    fl_st_power_off,        // 6
-    fl_st_next_filter,      // 7
-    fl_st_input_one,        // 8
-    fl_st_input_two,        // 9
-    fl_st_input_three,      // 10
-    fl_st_input_four,       // 11
-    fl_st_set_clock,        // 12
-    fl_st_backlight,        // 13
-    // end sentinel
-    fl_st_null              // 14
-};
-
-unsigned long ir_code_cache[IFC_MAX];
-int idx;
+extern unsigned long ir_code_cache[IFC_MAX];            // from irlearn.cpp
 
 IRrecv irrecv(IR_PIN);                                  // create an instance of the IR receiver class
-extern decode_results results;
-extern unsigned long key;                               // IR key received
-
 DS1302 rtc = DS1302();                                  // create an RTC instance
 signed char last_mins;
 
@@ -168,10 +123,10 @@ void setup (void) {                                     // **** REAL POWER-ON ST
     read_eeprom_oper_values();
     cache_ir_codes();                                   // Get learned IR codes
     irrecv.enableIRIn();                                // IR receiver init
-    if (power == POWER_ON) {                            // system ON (fresh boot)
+    if (power_on) {                                     // system ON (fresh boot)
         lcd.turn_display_on();
         lcd.restore_backlight();                        // if power is ON, lcd must be visible ;)
-        power_on_logic(1);                              // power-on from cold
+        power_on_logic(true);                           // power-on from cold
     } else {
         lcd.clear();
         if (lcd.backlight_mode != BACKLIGHT_OFF) {
@@ -183,8 +138,8 @@ void setup (void) {                                     // **** REAL POWER-ON ST
 
 // this routine assumes the LCD display is init'd and available for us to write status messages to
 void power_on_logic (boolean cold_start) {
-    power = POWER_ON;
-    EEPROM.write(EEPROM_POWER, power);
+    power_on = true;
+    EEPROM.write(EEPROM_POWER, power_on);
     digitalWrite(DAC_RELAY_PIN, HIGH);                  // turn on DAC
     dac_init();                                         // init dac to mute and min vol
 
@@ -192,14 +147,15 @@ void power_on_logic (boolean cold_start) {
         lcd.clear();
         lcd.fade_backlight_on();
         lcd.send_string("Opus AMB LCDuino", LCD_LINE1);
-        if (check_config_button(2000) == 1) {           // check if the user wanted to enter 'setup mode'
+        if (check_config_button(2000)) {           // check if the user wanted to enter 'setup mode'
             enter_setup_mode();                         // user stays in this mode until he's done, then control returns
         }
     }
     lcd.clear();
     lcd.backlight_mode = EEPROM.read(EEPROM_NORMAL_BACKLIGHT_MODE);
     select_input(current_input);                        // Select input, set volume and draw display
-    dac_select_filter(filter);                          // Set DAC filter mode
+    dac_select_filter(filter);                          // Set DAC filter mode to saved state
+    dac_mute(mute);                                     // Set mute to saved state
     draw_status();
     digitalWrite(AMP_RELAY_PIN, HIGH);                  // push Amp 'button'
     delay(AMP_RELAY_MS);
@@ -208,8 +164,6 @@ void power_on_logic (boolean cold_start) {
 
 
 void power_off_logic (void) {
-    power = POWER_OFF;
-    EEPROM.write(EEPROM_POWER, power);
     lcd.clear();
     lcd.send_string("     Amp Off", LCD_LINE1);
     digitalWrite(AMP_RELAY_PIN, HIGH);                  // push Amp 'button'
@@ -222,6 +176,8 @@ void power_off_logic (void) {
     delay(DAC_OFF_DELAY);
     lcd.send_string("     DAC Off", LCD_LINE2);
     digitalWrite(DAC_RELAY_PIN, LOW);                   // turn off DAC
+    power_on = false;
+    EEPROM.write(EEPROM_POWER, power_on);
     delay(1000);
     lcd.clear();
     lcd.backlight_mode = EEPROM.read(EEPROM_STANDBY_BACKLIGHT_MODE);
@@ -230,16 +186,10 @@ void power_off_logic (void) {
 
 /* we get here if the user pressed the magic 'config button' in a short window at bootup time */
 void enter_setup_mode (void) {
-    int i;
-    byte setup_finished;
-    byte blink_toggle;
-    byte blink_count;
-    byte skip_this_key;
-
     lcd.clear();
     lcd.backLight(255);  // force it to be the max
     // wait 3-5 seconds, total, just to give the user a GOOD chance to remove his finger, so he won't cause a false-pos
-    for (i=0; i<4; i++) {
+    for (int i=0; i<4; i++) {
         lcd.send_string("Config Mode!", LCD_LINE1);
         if (i == 3) break;  // avoid clearing the display when we are done
         delay(300);
@@ -250,7 +200,7 @@ void enter_setup_mode (void) {
     delay(1000);
     lcd.clear();
     lcd.send_string("Restore Default?", LCD_LINE1);
-    if (check_config_button(2000) == 1) {
+    if (check_config_button(2000)) {
         lcd.send_string("Restored default", LCD_LINE2);
         init_eeprom();
         read_eeprom_oper_values();
@@ -259,73 +209,16 @@ void enter_setup_mode (void) {
     delay(1000);
     lcd.clear();
     lcd.send_string("Learn IR?", LCD_LINE1);
-    if (check_config_button(2000) == 1) {
+    if (check_config_button(2000)) {
         irrecv.resume();                                // we just consumed one key; 'start' to receive the next value
-        lcd.clear();
-        lcd.send_string("Learning IR:", LCD_LINE1);
-        delay(2000);
-        idx = 0;
-        setup_finished = 0;
-        while (!setup_finished && (idx < IFC_MAX)) {    // for each array item (0 .. IFC_MAX-1)
-            lcd.clear_line(LCD_LINE2);
-            draw_IR_prompt(idx);               // prompt the user for which key to press
-            blink_toggle = 1;
-            blink_count = 0;
-            skip_this_key = 0;
-            /* non-blocking poll for a keypress */
-            while (!setup_finished && !skip_this_key) {
-                key = get_IR_key();
-                if (key != 0) {
-                    skip_this_key = 0;
-                    break;                              // exit this blink-loop when we found a key
-                }
-                irrecv.resume();                        // we just consumed one key; 'start' to receive the next value
-                if (blink_toggle == 1) {
-                    blink_toggle = 0;
-                    lcd.clear_line(LCD_LINE2);
-                    delay(150);
-                } else {
-                    blink_toggle = 1;
-                    ++blink_count;
-                    draw_IR_prompt(idx);
-                    delay(300);
-                }
-                if (scan_front_button() == 1) {         // Skip code if front button pressed
-                    skip_this_key = 1;
-                    lcd.clear_line(LCD_LINE2);
-                    lcd.send_string("Key Skipped.", LCD_LINE2);
-                    delay(1000);
-                    break;
-                }
-                if ( blink_count >= 40 ) {              // After long timeout abort setup
-                    setup_finished = 1;
-                    lcd.clear();
-                    lcd.send_string("Aborted.", LCD_LINE1);
-                    delay(1000);
-                    return;                             // Return to main loop
-                }
-            } // while...waiting for key
-            if (!skip_this_key && !setup_finished) {    // Got key so show code and save
-                draw_IR_prompt(idx);
-                lcd.send_string("Code: ", LCD_LINE2);
-                lcd_print_long_hex(results.value);
-                EEwrite_long(EEPROM_IR_LEARNED_BASE + (idx * sizeof(long)), key);
-            }
-            idx++;                      // point to the next IR key to learn
-            delay(1000);                // debounce a little more
-            irrecv.resume();            // we just consumed one key; 'start' to receive the next value
-        } // while... looping all keys
+        // ir_learn()
     }
-    cache_ir_codes();
-    lcd.clear();
-    lcd.restore_backlight();
-    lcd.send_string("Completed.", LCD_LINE1);
     delay(500);
     lcd.clear();
 }
 
 void loop (void) {
-    if (power == POWER_OFF) {                           // service/display clock and some IR commands (but minimal)
+    if (!power_on) {                                    // service/display clock and some IR commands (but minimal)
         if (lcd.backlight_mode != BACKLIGHT_OFF) {
             draw_clock(0);
         }
@@ -370,10 +263,8 @@ void handle_keys_standby (void) {                       // key handling when sys
 void handle_keys_normal (void) {                        // key handling when system is on
     int i;
     byte let_go;
-    unsigned long front_button_press_ts = 0;
     if (scan_front_button()) {                          // one-shot check if the front button was pressed
         let_go = 0;
-        front_button_press_ts = millis();
         for (i=0; i<15; i++) {                      // if the button is held for > 2 seconds then turn power off
             if (!scan_front_button()) {
                 let_go = 1;
@@ -498,16 +389,7 @@ void next_backlight_mode(void) {
     lcd.clear();
 }
 
-byte scan_front_button (void) {
-    byte in_keys = lcd.ReadInputKeys();
-    if ( (in_keys & LCD_MCP_INPUT_PINS_MASK /*B01100000*/) != LCD_MCP_INPUT_PINS_MASK) {
-        return 1;
-    } else {
-        return 0;
-    }
-}
-
-byte check_config_button (unsigned long timeout) {      // Wait until timout for button to be pressed
+boolean check_config_button (unsigned long timeout) {      // Wait until timout for button to be pressed
     unsigned long start_time = millis();
     while ( abs(millis() - start_time) <= timeout) {
         if (scan_front_button() == 1) {
@@ -516,18 +398,6 @@ byte check_config_button (unsigned long timeout) {      // Wait until timout for
         delay(20);
     }
     return 0;
-}
-
-void cache_ir_codes (void) {
-    // Read IR codes for each function into RAM
-    for (idx=0; idx <= IFC_MAX; idx++) {
-        ir_code_cache[idx] = EEread_long(EEPROM_IR_LEARNED_BASE + (idx * sizeof(long)));
-    }
-}
-
-void draw_IR_prompt (int idx) {
-    lcd.clear_line(LCD_LINE2);
-    display_progmem_string_to_lcd_P( &(fl_st_IR_learn[idx]), LCD_LINE2);
 }
 
 void draw_clock (byte admin_forced) {
@@ -572,12 +442,12 @@ void select_input (byte new_input) {
     EEPROM.write(EEPROM_INPUT_BASE+current_input, volume);  // save volume of current input
 
     mux_select_input(new_input);
-    EEPROM.write(EEPROM_INPUT_SEL, new_input);                      // save new input selection
+    EEPROM.write(EEPROM_INPUT_SEL, new_input);              // save new input selection
 
     volume = EEPROM.read(EEPROM_INPUT_BASE+new_input);      // read saved volume of new input
     update_volume(volume);                                  // set volume for new input (doesn't affect mute)
 
-    current_input = new_input;                                      // record new input
+    current_input = new_input;                              // record new input
     draw_input(new_input);
 }
 
@@ -586,11 +456,11 @@ void draw_input (byte input) {
 }
 
 void read_eeprom_oper_values (void) {
-    power                       = EEPROM.read(EEPROM_POWER);        // Last power state
+    power_on                    = EEPROM.read(EEPROM_POWER);        // Last power state
     filter                      = EEPROM.read(EEPROM_DAC_FILTER);
     current_input               = EEPROM.read(EEPROM_INPUT_SEL);
     volume                      = EEPROM.read(EEPROM_INPUT_BASE+current_input);
-    if (power == POWER_ON) {
+    if (power_on) {
         lcd.backlight_mode      = EEPROM.read(EEPROM_NORMAL_BACKLIGHT_MODE);
     } else {
         lcd.backlight_mode      = EEPROM.read(EEPROM_STANDBY_BACKLIGHT_MODE);
@@ -598,7 +468,9 @@ void read_eeprom_oper_values (void) {
 }
 
 void draw_status () {
-    if ( mute==1 ) {
+    char string_buf[17];    // usually 16+1 (1 for the nullbyte)
+
+    if (mute) {
         lcd.send_string("MUTE", LCD_LINE1+4);
     } else {
         lcd.send_string("    ", LCD_LINE1+4);
@@ -609,9 +481,9 @@ void draw_status () {
 
 void init_eeprom (void) {
     EEPROM.write(EEPROM_VERSION, 0x01);
-    EEPROM.write(EEPROM_POWER, POWER_ON);
-    EEPROM.write(EEPROM_INPUT_SEL, 0);
-    EEPROM.write(EEPROM_DAC_FILTER, 2);
+    EEPROM.write(EEPROM_POWER, power_on);
+    EEPROM.write(EEPROM_INPUT_SEL, current_input);
+    EEPROM.write(EEPROM_DAC_FILTER, filter);
     EEPROM.write(EEPROM_NORMAL_BACKLIGHT_MODE, BACKLIGHT_ON);
     EEPROM.write(EEPROM_STANDBY_BACKLIGHT_MODE, BACKLIGHT_AUTODIM);
 }

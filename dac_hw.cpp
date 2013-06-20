@@ -26,7 +26,7 @@
 #include <inttypes.h>
 
 #include "config.h"
-#include "dac_hw.h"
+#include "dac_hw_defs.h"
 
 // The write to WM8741 DAC
 void wm8741_write(byte reg, byte val) {

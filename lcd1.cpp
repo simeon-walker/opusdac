@@ -1,6 +1,6 @@
 /*
  * LCDduino Controller for Twisted Pear Opus DAC and Mux
- * Simeon Walker 2011-2012
+ * Simeon Walker 2011-2013
  *
  * Derived from Volu-Master(tm) by Bryan Levin (Linux-Works Labs)
  * Copyright (c) 2009-2011 Bryan Levin
@@ -30,10 +30,10 @@
 
 #include "config.h"
 #include "lcd1.h"
-#include "volcontrol_defs.h"   // defines and constants
+#include "opusdac_defs.h"   // defines and constants
 #include "util.h"
 
-byte font_chars[] PROGMEM = {
+const byte font_chars[] PROGMEM = {
     B11111, B11111, B11111, B00000, B11111, B00000, B00000, B00000,
     B11111, B11111, B11111, B00000, B11111, B00000, B00000, B00000,
     B00000, B00000, B00000, B00000, B00000, B00000, B00000, B00000,
@@ -45,8 +45,8 @@ byte font_chars[] PROGMEM = {
 //  1       2       3       4       5       6       7       8
 };
 //                              0      1        2      3      4        5      6        7        8       9
-byte bignumchars1[] PROGMEM = { 1,2,1, 32,1,32, 3,3,1, 2,3,1, 1,6,1,   1,3,3, 1,3,3,  2,2,1,   1,3,1, 1,3,1 };
-byte bignumchars2[] PROGMEM = { 5,4,5, 32,5,32, 5,4,4, 4,4,5, 32,32,5, 4,4,5, 5,4,5,  32,32,5, 5,4,5, 32,32,5 };
+const byte bignumchars1[] PROGMEM = { 1,2,1, 32,1,32, 3,3,1, 2,3,1, 1,6,1,   1,3,3, 1,3,3,  2,2,1,   1,3,1, 1,3,1 };
+const byte bignumchars2[] PROGMEM = { 5,4,5, 32,5,32, 5,4,4, 4,4,5, 32,32,5, 4,4,5, 5,4,5,  32,32,5, 5,4,5, 32,32,5 };
 
 extern byte lcd_in_use_flag;
 
@@ -182,15 +182,15 @@ void LCDI2C4Bit::send_string (const char *str, const byte addr) {
 
 // 'str' MUST be null-terminated
 // the _P function (here) reads from PROGMEM ptr for strings, not from RAM!
-void LCDI2C4Bit::send_string_P (PROGMEM char *p_ptr, const byte addr) {
-    //  Send string at addr, if addr <> 0, or cursor position  if addr == 0
-    if (addr != 0) {
-        command(addr); // cursor pos
-    }
-    strncpy_P(string_buf, p_ptr, STRING_BUF_MAXLEN-1);
-    string_buf[STRING_BUF_MAXLEN] = '\0';  // safety
-    send_string(string_buf, 0);
-}
+//void LCDI2C4Bit::send_string_P (PROGMEM char *p_ptr, const byte addr) {
+//    //  Send string at addr, if addr <> 0, or cursor position  if addr == 0
+//    if (addr != 0) {
+//        command(addr); // cursor pos
+//    }
+//    strncpy_P(string_buf, p_ptr, STRING_BUF_MAXLEN-1);
+//    string_buf[STRING_BUF_MAXLEN] = '\0';  // safety
+//    send_string(string_buf, 0);
+//}
 
 void LCDI2C4Bit::load_bignum (void) {
     byte a;
@@ -309,11 +309,11 @@ void LCDI2C4Bit::handle_backlight_auto (void) {            // backlight time-out
 }
 
 
-void display_progmem_string_to_lcd_P (PROGMEM char *p_ptr[], const byte addr) {
-    char *p;
-    p = (char *)pgm_read_word(p_ptr);                      // read the addr of the first byte of the text
-    lcd.send_string_P(p, addr);
-}
+//void display_progmem_string_to_lcd_P (PROGMEM char *p_ptr[], const byte addr) {
+//    char *p;
+//    p = (char *)pgm_read_word(p_ptr);                      // read the addr of the first byte of the text
+//    lcd.send_string_P(p, addr);
+//}
 
 void lcd_print_long_hex (long p_value) {
     byte byte1 = ((p_value >> 0) & 0xFF);
@@ -346,5 +346,15 @@ void blink_led13 (byte on_off_flag) {
         PORTB &= ((byte)B11011111);  // turn pin 13 LED off
     }
 }
+
+boolean scan_front_button (void) {
+    byte in_keys = lcd.ReadInputKeys();
+    if ( (in_keys & LCD_MCP_INPUT_PINS_MASK /*B01100000*/) != LCD_MCP_INPUT_PINS_MASK) {
+        return true;
+    } else {
+        return false;
+    }
+}
+
 
 // end lcd1.cpp

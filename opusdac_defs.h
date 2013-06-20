@@ -25,9 +25,6 @@
 #ifndef _VOLCONTROL_DEFS_H_
 #define _VOLCONTROL_DEFS_H_
 
-// we have a global string buffer that we use over and over again for short-term use
-#define STRING_BUF_MAXLEN     16+1
-
 /*
  * IFC = internal function codes
  *

@@ -39,16 +39,6 @@
 #define CMD_LEFT                     0x18
 #define CMD_HOME                     0x02
 
-// 16x2 LCD
-#define LCD_COLS                       16
-#define LCD_LINES                       2
-#define LCD_USER_CHARS                  8
-#define LCD_CHAR_ROWS                   8
-
-// backlight
-#define DEFAULT_BL_LEVEL              255
-#define MIN_BL_LEVEL                  100
-
 // the LCD i2c device address
 #define LCD_MCP_DEV_ADDR             0xA7
 
@@ -101,7 +91,7 @@ class LCDI2C4Bit {
         void load_bignum (void);
         void draw_bignum_at (byte val, byte char_pos);
         void send_string (const char *str, const byte addr);
-        void send_string_P (PROGMEM char *str, byte addr);
+        //void send_string_P (PROGMEM char *str, byte addr);
         // display and backlight routines
         void turn_display_on (void);
         void turn_display_off (void);
@@ -129,12 +119,10 @@ class LCDI2C4Bit {
 
 extern LCDI2C4Bit lcd;   //  = LCDI2C4Bit(LCD_MCP_DEV_ADDR, LCD_LINES, LCD_COLS, PWM_BACKLIGHT_PIN);   //0xa7 is the hardware addr of the i2c chip
 
-extern void display_progmem_string_to_lcd_P (PROGMEM char *p_ptr[], const byte addr);
+//extern void display_progmem_string_to_lcd_P (PROGMEM char *p_ptr[], const byte addr);
 extern void lcd_print_long_hex (long p_value);
 extern void blink_led13 (byte on_off_flag);
-
-// a global static short-term use buffer
-extern char string_buf[];
+extern boolean scan_front_button (void);
 
 // some C++ class refs
 //extern decode_results results;

@@ -22,14 +22,17 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#ifndef _UTIL_H_
+#define _UTIL_H_
+
 extern void bcd2ascii (const byte val, byte *ms, byte *ls);
 extern void bin2ascii (const byte val, byte *ms, byte *ls);
 
 extern byte bcd2bin (const byte val);
 extern byte bin2bcd (const byte val);
 
-extern void dec2bin (byte b, byte num_bits, char out_buf[]);
-extern byte bin2dec (char *str_buf, int len);
+//extern void dec2bin (byte b, byte num_bits, char out_buf[]);
+//extern byte bin2dec (char *str_buf, int len);
 
 extern void hex2ascii (const byte val, byte *ms, byte *ls);
 
@@ -39,6 +42,7 @@ extern void EEwrite_long (int p_address, unsigned long p_value);
 extern unsigned long EEread_long (int p_address);
 extern long l_map (long x, long in_min, long in_max, long out_min, long out_max);
 
+#endif
 
 /*
  * memory checkers

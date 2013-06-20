@@ -39,6 +39,7 @@
 #include <inttypes.h>
 
 #include "irremote.h"
+#include "irremote_defs.h"
 
 volatile irparams_t irparams;
 

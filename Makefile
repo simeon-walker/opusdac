@@ -42,27 +42,24 @@
 
 # The path to your Arduino software top level directory
 ifndef ARDUINO_ROOT
-ARDUINO_ROOT	= /usr/share/arduino
+ARDUINO_ROOT		= /usr/share/arduino
 endif
 
 # The path to your avrdude program executable
 ifndef AVRDUDE
-AVRDUDE		= avrdude
+AVRDUDE				= avrdude
 endif
 
 # The default LCDuino-1 device path (if not set externally via environment)
 ifndef port
-port		= /dev/ttyUSB0
+port				= /dev/ttyUSB0
 endif
 
 PROG_NAME			= opusdac
-PRE_REL				=
-#PRE_REL			= __$(shell date +%F__%H_%M_%S_%P)
 ARDUINO_CORE_ROOT	= $(ARDUINO_ROOT)/hardware/arduino/cores/arduino
 VARIANTS			= $(ARDUINO_ROOT)/hardware/arduino/variants/standard
 MCU					= atmega328p
-EXTRA_C_FLAGS		= -w -Wunused-variable -Wextra -Wunused-macros -pedantic
-#EXTRA_C_FLAGS		= -Wall -pedantic -Wunused-variable -Wextra
+EXTRA_C_FLAGS		= -Wall -Wextra
 CLI_BUILD_FLAGS		= -DCLI_BUILD -mmcu=$(MCU)  $(EXTRA_C_FLAGS)
 
 #
@@ -135,6 +132,7 @@ MY_OBJS = \
 	motorpot.cpp.o \
 	lcd1.cpp.o \
 	irremote.cpp.o \
+	irlearn.cpp.o \
 	rtc.cpp.o \
 	dac_hw.cpp.o \
 	util.cpp.o
@@ -147,6 +145,7 @@ MY_SRCS = \
 	motorpot.cpp \
 	lcd1.cpp \
 	irremote.cpp \
+	irlearn.cpp \
 	rtc.cpp \
 	dac_hw.cpp \
 	util.cpp
@@ -155,14 +154,15 @@ MY_SRCS = \
 # Volu-Master headers
 #
 MY_INCLUDE_FILES = \
-	config.h \
-	motorpot.h \
-	volcontrol_defs.h \
-	lcd1.h \
-	irremote.h \
-	rtc.h \
-	dac_hw.h \
-	util.h
+#	config.h \
+#	motorpot.h \
+#	opusdac_defs.h \
+#	lcd1.h \
+#	irremote.h \
+#	irlearn.h \
+#	rtc.h \
+#	dac_hw.h \
+#	util.h
 
 #
 # Subdirectories that make needs to traverse into
@@ -286,8 +286,8 @@ lcd1.cpp.o:	lcd1.cpp $(MY_INCLUDE_FILES)
 irremote.cpp.o: irremote.cpp $(MY_INCLUDE_FILES)
 	$(CXX) $(MY_INCLUDE_PATHS) $< -o $@
 
-#irlearn.cpp.o: irlearn.cpp $(MY_INCLUDE_FILES)
-#	$(CXX) $(MY_INCLUDE_PATHS) $< -o $@
+irlearn.cpp.o: irlearn.cpp $(MY_INCLUDE_FILES)
+	$(CXX) $(MY_INCLUDE_PATHS) $< -o $@
 
 rtc.cpp.o: rtc.cpp $(MY_INCLUDE_FILES)
 	$(CXX) $(MY_INCLUDE_PATHS) $< -o $@

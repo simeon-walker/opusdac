@@ -22,8 +22,8 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef _VM_COMMON_H_
-#define _VM_COMMON_H_
+#ifndef _MOTOR_POT_H_
+#define _MOTOR_POT_H_
 
 #include "Arduino.h"
 
@@ -35,4 +35,5 @@ extern void motor_drive(byte ccw, byte cw);
 
 extern byte update_volume (byte new_vol);
 
-#endif // _VM_COMMON_H_
+#endif // _MOTOR_POT_H_
+

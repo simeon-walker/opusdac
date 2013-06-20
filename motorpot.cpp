@@ -32,7 +32,7 @@
 #include "util.h"
 
 #include "motorpot.h"
-#include "volcontrol_defs.h"   // defines and constants
+#include "opusdac_defs.h"   // defines and constants
 
 byte pot_state = MOTOR_INIT;
 int pot_last_seen = 0;           // raw values range from 0..1023
@@ -137,4 +137,3 @@ void motor_drive(byte cw, byte ccw) {
     digitalWrite(MOTOR_POT_ROTATE_CW, cw);
 }
 
-// end volcontrol.cpp

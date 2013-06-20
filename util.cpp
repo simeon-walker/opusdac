@@ -51,42 +51,42 @@ byte bin2bcd (const byte val) {
 // write string results in our SUPPLIED buffer and term with null byte.
 // the result field should be 'num_bits' long in ascii chars.
 
-void dec2bin (byte b, byte num_bits, char string_buf[]) {
-    int i;
-    // for a normal 8-bit byte, num_bits s/b 8 (and so the high bit is bit7)
-    for (i=0; i<num_bits; i++) {
-        if (b & 0x01) {
-            string_buf[num_bits-i-1] = '1';
-        } else {
-            string_buf[num_bits-i-1] = '0';
-        }
-        // shift our whole byte to the right.  0's are auto-inserted to the left.
-        // we want to do all our compares on the bit-0 position so right-shifting
-        // is how we get access to each of the 8 bits.
-        b >>= 1;
-    }
-    string_buf[num_bits] = '\0';
-}
+//void dec2bin (byte b, byte num_bits, char string_buf[]) {
+//    int i;
+//    // for a normal 8-bit byte, num_bits s/b 8 (and so the high bit is bit7)
+//    for (i=0; i<num_bits; i++) {
+//        if (b & 0x01) {
+//            string_buf[num_bits-i-1] = '1';
+//        } else {
+//            string_buf[num_bits-i-1] = '0';
+//        }
+//        // shift our whole byte to the right.  0's are auto-inserted to the left.
+//        // we want to do all our compares on the bit-0 position so right-shifting
+//        // is how we get access to each of the 8 bits.
+//        b >>= 1;
+//    }
+//    string_buf[num_bits] = '\0';
+//}
 
 // converts the string '0101...' to a byte value 0..255
 // takes string from our global buffer, string_buf[]
 // returns value directly.
 
-byte bin2dec (char *str_buf, int len) {
-    byte i;
-    byte single_bit;
-    byte sum;
-    sum = 0;
-    for (i=0; i < len; i++) {
-        // get the next char from the string array
-        single_bit = str_buf[i];
-        // if its a '1' then add in the right power of 2
-        if (single_bit == '1') {
-            sum += (1 << (len - 1 - i));
-        }
-    }
-    return sum;
-}
+//byte bin2dec (char *str_buf, int len) {
+//    byte i;
+//    byte single_bit;
+//    byte sum;
+//    sum = 0;
+//    for (i=0; i < len; i++) {
+//        // get the next char from the string array
+//        single_bit = str_buf[i];
+//        // if its a '1' then add in the right power of 2
+//        if (single_bit == '1') {
+//            sum += (1 << (len - 1 - i));
+//        }
+//    }
+//    return sum;
+//}
 
 void hex2ascii (const byte val, byte *ms, byte *ls) {
     static char hex_buf[8];
