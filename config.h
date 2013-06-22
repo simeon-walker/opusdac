@@ -57,11 +57,18 @@
 #define BACKLIGHT_MIN                   (100)
 #define BACKLIGHT_MAX                   (255)
 
+// the LCD i2c device address
+#define LCD_MCP_DEV_ADDR                0xA7
+
 // 16x2 LCD
-#define LCD_COLS                       16
+#define LCD_COLS                        16
 #define LCD_LINES                       2
 #define LCD_USER_CHARS                  8
 #define LCD_CHAR_ROWS                   8
+
+// helpful position constants; lets us put our cursor at start of lines (or add offset, up to 16/20 chars)
+#define LCD_LINE1                       0x80
+#define LCD_LINE2                       0xC0
 
 // vol control enum value equates
 #define VOL_MIN                     (0)

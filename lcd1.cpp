@@ -30,6 +30,7 @@
 
 #include "config.h"
 #include "lcd1.h"
+#include "lcd1_defs.h"
 #include "opusdac_defs.h"   // defines and constants
 #include "util.h"
 
@@ -94,7 +95,6 @@ void LCDI2C4Bit::SetInputKeysMask (byte input_keys_mask) {
     myInputKeysMask = input_keys_mask;
 }
 
-#ifdef LOCAL_MCP_DRIVER
 void LCDI2C4Bit::SetMCPReg (byte reg, byte val) {       // set one byte using the wire (i2c) interface
     Wire.beginTransmission(lcd_i2c_address);
     Wire.write(reg);
@@ -113,7 +113,6 @@ byte LCDI2C4Bit::GetMCPReg (byte reg) {                 // call the 'wire' routi
     }
     return val;
 }
-#endif
 
 byte LCDI2C4Bit::ReadInputKeys (void) {                 // 2 extra lines on the MCP chip that we can map to soft pushbuttons
     byte data;
@@ -179,18 +178,6 @@ void LCDI2C4Bit::send_string (const char *str, const byte addr) {
     }
     print((char *)str);
 }
-
-// 'str' MUST be null-terminated
-// the _P function (here) reads from PROGMEM ptr for strings, not from RAM!
-//void LCDI2C4Bit::send_string_P (PROGMEM char *p_ptr, const byte addr) {
-//    //  Send string at addr, if addr <> 0, or cursor position  if addr == 0
-//    if (addr != 0) {
-//        command(addr); // cursor pos
-//    }
-//    strncpy_P(string_buf, p_ptr, STRING_BUF_MAXLEN-1);
-//    string_buf[STRING_BUF_MAXLEN] = '\0';  // safety
-//    send_string(string_buf, 0);
-//}
 
 void LCDI2C4Bit::load_bignum (void) {
     byte a;
@@ -308,13 +295,6 @@ void LCDI2C4Bit::handle_backlight_auto (void) {            // backlight time-out
     }
 }
 
-
-//void display_progmem_string_to_lcd_P (PROGMEM char *p_ptr[], const byte addr) {
-//    char *p;
-//    p = (char *)pgm_read_word(p_ptr);                      // read the addr of the first byte of the text
-//    lcd.send_string_P(p, addr);
-//}
-
 void lcd_print_long_hex (long p_value) {
     byte byte1 = ((p_value >> 0) & 0xFF);
     byte byte2 = ((p_value >> 8) & 0xFF);
@@ -355,6 +335,5 @@ boolean scan_front_button (void) {
         return false;
     }
 }
-
 
 // end lcd1.cpp

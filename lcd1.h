@@ -29,45 +29,10 @@
  * lcd via i2c
  */
 
-// helpful position constants; lets us put our cursor at start of lines (or add offset, up to 16/20 chars)
-#define LCD_LINE1                    0x80
-#define LCD_LINE2                    0xC0
-
-//command bytes for LCD
-#define CMD_CLR                      0x01
-#define CMD_RIGHT                    0x1C
-#define CMD_LEFT                     0x18
-#define CMD_HOME                     0x02
-
-// the LCD i2c device address
-#define LCD_MCP_DEV_ADDR             0xA7
-
 // MCP i2c PE 'user input' pins
 #define LCD_MCP_INPUT_PINS_MASK  B01100000     // TODO: pick one for input switch (readable) and one for power-relay (writable)
 
-// general MCP i2c register codes
-#define MCP_REG_IODIR                0x00
-#define MCP_REG_IPOL                 0x01
-#define MCP_REG_GPINTEN              0x02
-#define MCP_REG_DEFVAL               0x03
-#define MCP_REG_INTCON               0x04
-#define MCP_REG_IOCON                0x05
-#define MCP_REG_GPPU                 0x06
-#define MCP_REG_INTF                 0x07
-#define MCP_REG_INTCAP               0x08
-#define MCP_REG_GPIO                 0x09
-#define MCP_REG_OLAT                 0x0A
-
-// we use our own
-#define LOCAL_MCP_DRIVER                1
-
-// lcd enums for calling clear_line() class.  this avoids direct coding of literals
-// and you don't have to know if its zero or one-based, etc.
-#define LCD_LINE_ONE                    1
-#define LCD_LINE_TWO                    2
-
 // IMPORTANT! Wire. must have a begin() before calling init()
-
 class LCDI2C4Bit {
     public:
         LCDI2C4Bit( byte devI2CAddress, byte num_lines, byte lcdwidth, byte backlightPin);
@@ -81,10 +46,8 @@ class LCDI2C4Bit {
 
         void SendToLCD (byte);
         void WriteLCDByte (byte);
-#ifdef LOCAL_MCP_DRIVER
         void SetMCPReg (byte, byte);
         byte GetMCPReg (byte);
-#endif
         void cursorTo (byte, byte);
         void SetInputKeysMask (byte);
         byte ReadInputKeys (void);
